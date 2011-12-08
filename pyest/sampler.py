@@ -66,6 +66,14 @@ class Sampler(object):
     def acceptance_fraction(self):
         return self.naccepted/self.iterations
 
+    @property
+    def chain(self):
+        return self._chain
+
+    @property
+    def lnprobability(self):
+        return self._lnp
+
     def lnprob(self, p):
         return self.lnprobfn(p, *self.args)
 

@@ -35,9 +35,10 @@ class MHSampler(Sampler):
         self.cov = cov
 
     def do_reset(self):
-        self.chain = np.empty((self.dim, 0))
+        self._chain = np.empty((0, self.dim))
+        self._lnp   = np.empty(0)
 
-    def sample(self, p0, lnprob=None, randomstate=None, storechain=True,
+    def sample(self, p0, lnprob=None, randomstate=None, storechain=True, resample=1,
             iterations=1):
         self.random_state = randomstate
 
@@ -47,10 +48,13 @@ class MHSampler(Sampler):
 
         # resize chain
         if storechain:
-            self.chain = np.concatenate((self.chain,
-                    np.zeros((self.dim, iterations))), axis=1)
+            N = int(iterations/resample)
+            self._chain = np.concatenate((self._chain,
+                    np.zeros((N, self.dim))), axis=0)
+            self._lnp = np.append(self._lnp, np.zeros(N))
 
-        for i in xrange(iterations):
+        i0 = self.iterations
+        for i in xrange(int(iterations)):
             self.iterations += 1
 
             # proposal
@@ -64,12 +68,19 @@ class MHSampler(Sampler):
 
             if diff > 0:
                 p = q
-                self.chain[:,i] = p
                 lnprob = newlnprob
                 self.naccepted += 1
+
+            if storechain and i%resample == 0:
+                ind = i0 + int(i/resample)
+                self._chain[ind,:] = p
+                self._lnp[ind] = lnprob
+
+            # heavy duty iterator action going on right here
             yield p, lnprob, self.random_state
 
 if __name__ == '__main__':
+    import pylab as pl
     ndim = 10
     N = 100
 
@@ -85,8 +96,13 @@ if __name__ == '__main__':
         return -np.dot(x,np.dot(icov,x))/2.0
 
     sampler = MHSampler(cov, ndim, lnprob_gaussian, args=[icov])
-    for i in sampler.sample(p0, iterations=1000):
+    for i in sampler.sample(p0, iterations=1e5, resample=100):
         pass
 
     print sampler.acceptance_fraction
+    pl.plot(sampler.lnprobability)
+    pl.figure()
+    pl.plot(sampler.chain)
+
+    pl.show()
 
