@@ -5,11 +5,12 @@ Defines various nose unit tests
 
 """
 
+import time
+
 import numpy as np
-np.random.seed(1)
 
 from mh import MHSampler
-from ensemble import EnsembleSampler
+from ensemble import EnsembleSampler, DualEnsembleSampler, SingleGaussianEnsemble
 
 logprecision = -4
 
@@ -40,29 +41,39 @@ class Tests:
     def tearDown(self):
         pass
 
-    def test_mh(self):
-        self.sampler = MHSampler(self.cov, self.ndim, lnprob_gaussian, args=[self.icov])
-        for i in self.sampler.sample(self.p0[0], iterations=self.nwalkers*self.N):
+    def check_sampler(self, N=None, p0=None):
+        if N is None:
+            N = self.N
+        if p0 is None:
+            p0 = self.p0
+
+        strt = time.time()
+        for i in self.sampler.sample(p0, iterations=N):
             pass
-
-        assert self.sampler.acceptance_fraction > 0.25
-
-        chain = self.sampler.chain
-        maxdiff = 10.**(logprecision)
-        assert np.all((np.mean(chain,axis=0)-self.mean)**2/self.N**2 < maxdiff)
-        assert np.all((np.cov(chain, rowvar=0)-self.cov)**2/self.N**2 < maxdiff)
-
-    def test_ensemble(self):
-        self.sampler = EnsembleSampler(self.nwalkers, self.ndim, lnprob_gaussian, args=[self.icov])
-        for i in self.sampler.sample(self.p0, iterations=self.N):
-            pass
+        print "Sampling took {:.3f} seconds".format(time.time() - strt)
 
         assert np.mean(self.sampler.acceptance_fraction) > 0.25
-
         chain = self.sampler.flatchain
         maxdiff = 10.**(logprecision)
         assert np.all((np.mean(chain,axis=0)-self.mean)**2/self.N**2 < maxdiff)
         assert np.all((np.cov(chain, rowvar=0)-self.cov)**2/self.N**2 < maxdiff)
+
+    def test_mh(self):
+        self.sampler = MHSampler(self.cov, self.ndim, lnprob_gaussian, args=[self.icov])
+        self.check_sampler(N=self.N*self.nwalkers, p0=self.p0[0])
+
+    def test_ensemble(self):
+        self.sampler = EnsembleSampler(self.nwalkers, self.ndim, lnprob_gaussian, args=[self.icov])
+        self.check_sampler()
+
+    def test_dual(self):
+        self.sampler = DualEnsembleSampler(self.nwalkers, self.ndim, lnprob_gaussian, args=[self.icov])
+        self.check_sampler()
+
+    def test_dual2(self):
+        self.sampler = DualEnsembleSampler(self.nwalkers, self.ndim, lnprob_gaussian,
+                ensemble_type=SingleGaussianEnsemble, args=[self.icov])
+        self.check_sampler()
 
 if __name__ == '__main__':
     import matplotlib.pyplot as pl
@@ -71,10 +82,11 @@ if __name__ == '__main__':
 
     chains = []
 
-    for t in [tests.test_mh, tests.test_ensemble]:
+    for t in [tests.test_dual2, tests.test_dual, tests.test_ensemble, tests.test_mh]:
         print t
         t()
-        print np.mean(tests.sampler.acor)
+        print "Mean autocorrelation time: {:.3f}".format(np.mean(tests.sampler.acor))
+        print "Mean acceptance fraction: {:.3f}".format(np.mean(tests.sampler.acceptance_fraction))
         chains.append(tests.sampler.flatchain)
 
     truth = tests.truth
