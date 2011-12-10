@@ -10,6 +10,8 @@ __all__ = ['Sampler']
 
 import numpy as np
 
+import acor
+
 class Sampler(object):
     """
     The base sampler object that implements various helper functions
@@ -71,9 +73,17 @@ class Sampler(object):
         return self._chain
 
     @property
-    def lnprobability(self):
-        return self._lnp
+    def flatchain(self):
+        return self._chain
 
-    def lnprob(self, p):
+    @property
+    def lnprobability(self):
+        return self._lnprob
+
+    @property
+    def acor(self):
+        return acor.acor(self._chain.T)[0]
+
+    def get_lnprob(self, p):
         return self.lnprobfn(p, *self.args)
 

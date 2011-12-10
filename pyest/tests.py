@@ -7,8 +7,9 @@ Defines various nose unit tests
 
 import numpy as np
 np.random.seed(1)
+
+from mh import MHSampler
 from ensemble import EnsembleSampler
-from ml import *
 
 logprecision = -4
 
@@ -34,74 +35,58 @@ class Tests:
         self.icov = np.linalg.inv(self.cov)
         self.p0   = [0.1*np.random.randn(self.ndim) for i in xrange(self.nwalkers)]
 
+        self.truth = np.random.multivariate_normal(self.mean,self.cov,100000)
+
     def tearDown(self):
         pass
 
-    def test_ensemble_sampler(self,threads=1):
-        self.sampler = EnsembleSampler(self.nwalkers,self.ndim,lnprob_gaussian,
-                        postargs=[self.icov],threads=threads)
-        pos,prob,state = self.sampler.run_mcmc(self.p0, None, self.N)
+    def test_mh(self):
+        self.sampler = MHSampler(self.cov, self.ndim, lnprob_gaussian, args=[self.icov])
+        for i in self.sampler.sample(self.p0[0], iterations=self.nwalkers*self.N):
+            pass
+
+        assert self.sampler.acceptance_fraction > 0.25
 
         chain = self.sampler.chain
-        flatchain = np.zeros([self.ndim,chain.shape[-1]*self.nwalkers])
-        for i in range(self.ndim):
-            flatchain[i,:] = chain[:,i,:].flatten()
-
         maxdiff = 10.**(logprecision)
-        assert np.all((np.mean(flatchain,axis=-1)-self.mean)**2/self.N**2 < maxdiff)
-        assert np.all((np.cov(flatchain)-self.cov)**2/self.N**2 < maxdiff)
+        assert np.all((np.mean(chain,axis=0)-self.mean)**2/self.N**2 < maxdiff)
+        assert np.all((np.cov(chain, rowvar=0)-self.cov)**2/self.N**2 < maxdiff)
 
-    def test_multi_ensemble(self):
-        self.test_ensemble_sampler(threads=self.ndim/2)
+    def test_ensemble(self):
+        self.sampler = EnsembleSampler(self.nwalkers, self.ndim, lnprob_gaussian, args=[self.icov])
+        for i in self.sampler.sample(self.p0, iterations=self.N):
+            pass
 
-    def test_gaussian_sampler(self, threads=1):
-        self.sampler = GaussianSampler(self.nwalkers,self.ndim,lnprob_gaussian,
-                        postargs=[self.icov],threads=threads)
-        pos,prob,state = self.sampler.run_mcmc(self.p0, None, self.N)
+        assert np.mean(self.sampler.acceptance_fraction) > 0.25
 
-        chain = self.sampler.chain
-        flatchain = np.zeros([self.ndim,chain.shape[-1]*self.nwalkers])
-        for i in range(self.ndim):
-            flatchain[i,:] = chain[:,i,:].flatten()
-
+        chain = self.sampler.flatchain
         maxdiff = 10.**(logprecision)
-        assert np.all((np.mean(flatchain,axis=-1)-self.mean)**2/self.N**2 < maxdiff)
-        assert np.all((np.cov(flatchain)-self.cov)**2/self.N**2 < maxdiff)
-
-    def _dontdo_em_sampler(self, threads=1):
-        self.sampler = EMSampler(self.nwalkers,self.ndim,lnprob_gaussian,
-                        postargs=[self.icov],threads=threads)
-        pos,prob,state = self.sampler.run_mcmc(self.p0, None, self.N)
-
-        chain = self.sampler.chain
-        flatchain = np.zeros([self.ndim,chain.shape[-1]*self.nwalkers])
-        for i in range(self.ndim):
-            flatchain[i,:] = chain[:,i,:].flatten()
-
-        maxdiff = 10.**(logprecision)
-        assert np.all((np.mean(flatchain,axis=-1)-self.mean)**2 < maxdiff)
-        assert np.all((np.cov(flatchain)-self.cov)**2 < maxdiff)
+        assert np.all((np.mean(chain,axis=0)-self.mean)**2/self.N**2 < maxdiff)
+        assert np.all((np.cov(chain, rowvar=0)-self.cov)**2/self.N**2 < maxdiff)
 
 if __name__ == '__main__':
     import matplotlib.pyplot as pl
     tests = Tests()
     tests.setUp()
 
-    try:
-        tests._dontdo_em_sampler()
-    except Exception as e:
-        print e
+    chains = []
 
-    acor = tests.sampler.acor
-    print acor
+    for t in [tests.test_mh, tests.test_ensemble]:
+        print t
+        t()
+        print np.mean(tests.sampler.acor)
+        chains.append(tests.sampler.flatchain)
 
-    chain = tests.sampler.chain
-    truth = np.random.multivariate_normal(tests.mean,tests.cov,100000)
+    truth = tests.truth
     for i in range(tests.ndim):
-        pl.figure()
-        samps = chain[:,i,:].flatten()
-        pl.hist(samps,100,normed=True, histtype='step', color='r', lw=2)
+        pl.figure(i)
         pl.hist(truth[:,i],100,normed=True,histtype='stepfilled', color='k', alpha=0.4)
 
-    #pl.show()
+    for chain in chains:
+        for i in range(tests.ndim):
+            pl.figure(i)
+            samps = chain[:,i].flatten()
+            pl.hist(samps,100,normed=True, histtype='step', lw=2)
+
+    pl.show()
 
