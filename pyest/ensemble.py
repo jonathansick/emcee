@@ -6,7 +6,8 @@
 
 from __future__ import division
 
-__all__ = ['Ensemble', 'EnsembleSampler', 'DualEnsembleSampler']
+__all__ = ['Ensemble', 'EnsembleSampler', 'DualEnsembleSampler',
+           'SingleGaussianEnsemble']
 
 import numpy as np
 
