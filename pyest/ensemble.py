@@ -219,19 +219,24 @@ class DualEnsembleSampler(EnsembleSampler):
         The constructor for the Ensemble type that will be used. (default:
         Ensemble)
 
+    ensemble_args : dict, optional
+        Keyword arguments to pass to the ensemble constructor. (default: {})
+
     args : list, optional
         A list of arguments for lnprobfn.
 
     """
     def __init__(self, *args, **kwargs):
         self.ensemble_type = kwargs.pop('ensemble_type', Ensemble)
+        self.ensemble_args = kwargs.pop('ensemble_args', {})
         self.pool = kwargs.pop('pool', None)
 
         super(DualEnsembleSampler, self).__init__(*args, **kwargs)
         assert self.k%2 == 0
 
     def do_reset(self):
-        self.ensembles = [self.ensemble_type(self), self.ensemble_type(self)]
+        self.ensembles = [self.ensemble_type(self, **self.ensemble_args),
+                self.ensemble_type(self, **self.ensemble_args)]
 
         self.naccepted = np.zeros(self.k)
         self._chain  = np.empty((self.k, 0, self.dim))
