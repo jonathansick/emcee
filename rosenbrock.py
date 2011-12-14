@@ -9,11 +9,8 @@ from __future__ import division
 
 __all__ = ['']
 
-import pylab as pl
 import numpy as np
 from pyest import DualEnsembleSampler, EMEnsemble
-from matplotlib.patches import Ellipse
-
 
 def lnposterior(p):
     return -(100*(p[1]-p[0]*p[0])**2+(1-p[0])**2)/20.0
@@ -26,7 +23,10 @@ p0 = np.array([-8,-10])+np.array([16,70])*np.random.rand(nwalkers*2).reshape(nwa
 
 sampler = DualEnsembleSampler(nwalkers, 2, lnposterior)
 
-if False:
+if True:
+    import matplotlib.pyplot as pl
+    from matplotlib.patches import Ellipse
+
     es = []
     cs = ['r', 'b']
 
@@ -59,20 +59,16 @@ if False:
         line1.set_ydata(pos[:len(pos)/2,1])
         line2.set_xdata(pos[len(pos)/2:,0])
         line2.set_ydata(pos[len(pos)/2:,1])
+        pl.title("iter = %d"%i)
         pl.draw()
+        pl.savefig("%s/%04d.png"%(type(sampler.ensemble_type),i))
 else:
-    for pos,lnprob,state in sampler.sample(p0,None,None, iterations=100000, resample=1000):
-        if sampler.iterations % 1000 == 0:
+    for pos,lnprob,state in sampler.sample(p0,None,None, iterations=1e6, resample=1000):
+        if sampler.iterations % 10000 == 0:
             print sampler.iterations
 
 flatchain = sampler.flatchain
 acor = sampler.acor
+print np.median(acor, axis=0)
 print np.mean(acor, axis=0)
-
-pl.xlim([-8, 8])
-pl.ylim([-10,60])
-
-pl.plot(flatchain[0,:], flatchain[1,:], '.k')
-pl.savefig("ensemble.png")
-
 
