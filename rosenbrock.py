@@ -15,7 +15,7 @@ from pyest import DualEnsembleSampler, EMEnsemble
 def lnposterior(p):
     return -(100*(p[1]-p[0]*p[0])**2+(1-p[0])**2)/20.0
 
-nwalkers = 100
+nwalkers = 10000
 p0 = np.array([-8,-10])+np.array([16,70])*np.random.rand(nwalkers*2).reshape(nwalkers,2)
 
 # sampler = DualEnsembleSampler(nwalkers, 2, lnposterior,
