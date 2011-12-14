@@ -241,7 +241,7 @@ if __name__ == '__main__':
             s=8., edgecolor='none')
 
     for k in range(mixture.K):
-        x,y = mixture.means[k][0],mixture.means[k][1]
+        x,y = mixture.means[0,k],mixture.means[1,k]
         U,S,V = np.linalg.svd(mixture._cov[k])
         theta = np.degrees(np.arctan2(U[1,0], U[0,0]))
         ellipsePlot = Ellipse(xy=[x,y], width=2*np.sqrt(S[0]),
