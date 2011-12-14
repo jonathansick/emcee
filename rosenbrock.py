@@ -18,12 +18,12 @@ def lnposterior(p):
 nwalkers = 100
 p0 = np.array([-8,-10])+np.array([16,70])*np.random.rand(nwalkers*2).reshape(nwalkers,2)
 
-# sampler = DualEnsembleSampler(nwalkers, 2, lnposterior,
-#                 ensemble_type=EMEnsemble, ensemble_args={'K': 10})
+sampler = DualEnsembleSampler(nwalkers, 2, lnposterior,
+                ensemble_type=EMEnsemble, ensemble_args={'K': 10})
 
-sampler = DualEnsembleSampler(nwalkers, 2, lnposterior)
+# sampler = DualEnsembleSampler(nwalkers, 2, lnposterior)
 
-if True:
+if False:
     import matplotlib.pyplot as pl
     from matplotlib.patches import Ellipse
 
@@ -66,8 +66,8 @@ if True:
         else:
             pl.savefig("movie/gw/%04d.png"%(i))
 else:
-    for pos,lnprob,state in sampler.sample(p0,None,None, iterations=1e6, resample=1000):
-        if sampler.iterations % 10000 == 0:
+    for pos,lnprob,state in sampler.sample(p0,None,None, iterations=1e8, resample=1000):
+        if sampler.iterations % 100000 == 0:
             print sampler.iterations
 
 flatchain = sampler.flatchain
