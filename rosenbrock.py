@@ -61,13 +61,13 @@ if False:
         line2.set_ydata(pos[len(pos)/2:,1])
         pl.draw()
 else:
-    for pos,lnprob,state in sampler.sample(p0,None,None, iterations=190000, resample=1000):
+    for pos,lnprob,state in sampler.sample(p0,None,None, iterations=100000, resample=1000):
         if sampler.iterations % 1000 == 0:
             print sampler.iterations
 
 flatchain = sampler.flatchain
 acor = sampler.acor
-print acor
+print np.mean(acor, axis=0)
 
 pl.xlim([-8, 8])
 pl.ylim([-10,60])
