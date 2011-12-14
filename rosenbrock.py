@@ -61,7 +61,10 @@ if True:
         line2.set_ydata(pos[len(pos)/2:,1])
         pl.title("iter = %d"%i)
         pl.draw()
-        pl.savefig("%s/%04d.png"%(type(sampler.ensemble_type),i))
+        if sampler.ensemble_type == EMEnsemble:
+            pl.savefig("movie/em/%04d.png"%(i))
+        else:
+            pl.savefig("movie/gw/%04d.png"%(i))
 else:
     for pos,lnprob,state in sampler.sample(p0,None,None, iterations=1e6, resample=1000):
         if sampler.iterations % 10000 == 0:
