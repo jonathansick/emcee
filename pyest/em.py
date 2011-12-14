@@ -32,15 +32,15 @@ class EMEnsemble(Ensemble):
         Ns = len(s)
         c = np.atleast_2d(self.pos)
 
-        mixture = mixtures.MixtureModel(self.K, c)
-        mixture.run_kmeans(verbose=False)
-        mixture.run_em(verbose=False, regularization=1e-10, maxiter=2)
+        self.mixture = mixtures.MixtureModel(self.K, c)
+        self.mixture.run_kmeans(verbose=False)
+        self.mixture.run_em(verbose=False, regularization=1e-10, maxiter=2)
 
-        q = mixture.sample(Ns)
+        q = self.mixture.sample(Ns)
         newlnprob = self.get_lnprob(q)
 
-        newQ = mixture.lnprob(q)
-        oldQ = mixture.lnprob(s)
+        newQ = self.mixture.lnprob(q)
+        oldQ = self.mixture.lnprob(s)
 
         lnpdiff = oldQ - newQ + newlnprob - ensemble.lnprob
         accept = (lnpdiff > np.log(self._sampler._random.rand(len(lnpdiff))))

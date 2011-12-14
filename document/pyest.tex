@@ -1,5 +1,6 @@
 \documentclass[12pt,preprint]{aastex}
 \usepackage{amssymb,amsmath}
+
 \newcommand{\project}[1]{\textsl{#1}}
 \newcommand{\this}{\project{PyEST}}
 \newcommand{\foreign}[1]{\emph{#1}}
@@ -27,8 +28,8 @@
 \begin{document}
 
 \title{PyEST: Python Ensemble Sampling Toolkit}
-\author{Daniel~Foreman-Mackey\altaffilmark{1,2}}
-\altaffiltext{1}{Center for Cosmology and Particle Physics,
+\author{Daniel~Foreman-Mackey\altaffilmark{1}}
+\affil{Center for Cosmology and Particle Physics,
                          Department of Physics, New York University,
                          4 Washington Place, New York, NY, 10003, USA; danfm@nyu.edu}
 
@@ -37,12 +38,20 @@
     Markov chain Monte Carlo (MCMC) has proven to be a powerful tool for Bayesian
     parameter estimation in many applications in astronomy and cosmology.  Most
     standard MCMC algorithms require fine-tuning of the proposal distribution
-    through a computationally expensive "burn-in" phase --- especially when the
+    through a computationally expensive ``burn-in'' phase --- especially when the
     sampled distribution is highly covariant.
     Affine invariant ensemble samplers don't face this problem and they generally
     converge with fewer steps in the chain.
 
-    We present
+    We present a generalization to the \citet{Goodman:2010} affine invariant sampler
+    that allows for arbitrarily sophisticated unsupervised machine learning techniques
+    to be used to generate the proposal distribution.  We show that even a very simple
+    application of our algorithm is extremely efficient.  We judge the efficiency
+    of the algorithm based on the autocorrelation time of many chains.
+
+    This result is particularly useful in situations where the likelihood call is
+    very computationally expensive so that the extra cost associated with generating
+    the proposal is outweighed by the reduction in autocorrelation time.
 
 \end{abstract}
 
@@ -79,13 +88,17 @@
 
 \citet{Hou:2011}
 
-At the core of \this , lies the affine invariant ensemble sampler from
+At the core of \this, lies the affine invariant ensemble sampler from
 \citep{Goodman:2010}.  In particular, we have implemented the ``stretch move''
 algorithm.  To achieve convergence with standard MCMC samplers, several
 hyperparameters must be fine tuned to account for non-trivial covariances between
 the model parameters of a particular problem \citep[e.g.][]{Dunkley:2005}.
 The performance of an affine invariant sampler, however, is independent of the
 off-diagonal terms in the covariance matrix of any specific distribution.
+
+\subsection{The stretch move}
+
+
 
 \begin{enumerate}
 
@@ -121,10 +134,10 @@ off-diagonal terms in the covariance matrix of any specific distribution.
         \begin{itemize}
             \item \emph{N}-Gaussian (if proposal distribution isn't chosen properly
                 M-H is slow but it's fine if the proposal distribution is right).
-                \this destroys this problem no matter what!
+                \this~destroys this problem no matter what!
 
             \item Rosenbrock density (highly non-Gaussian) --- \emph{epic} failure
-                for M-H but \this does well.
+                for M-H but \this~does well.
 
             \item Multimodal distribution?
 
