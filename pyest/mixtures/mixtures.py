@@ -11,20 +11,6 @@ __all__ = ['MixtureModel']
 import numpy as np
 import numpy.ma as ma
 
-try:
-    from numpy.linalg import slogdet
-except ImportError:
-    print "Warning: upgrade numpy to get slogdet!"
-    def slogdet(A):
-        n = A.shape[0]
-        lu,piv = linalg.lu_factor(A)
-        s = 1. - 2. * (np.sum(piv != np.arange(0, n )) % 2)
-        d = lu.diagonal()
-        absd = np.abs(d)
-        s *= np.prod(np.sign(d))
-
-        return s, np.sum(np.log(absd))
-
 import _algorithms
 
 class MixtureModel(object):
@@ -166,7 +152,7 @@ class MixtureModel(object):
         # X.shape == (P,D)
         # self._means.shape == (D,K)
         # self.cov[k].shape == (D,D)
-        sgn, logdet = slogdet(self._cov[k])
+        sgn, logdet = np.linalg.slogdet(self._cov[k])
         if sgn <= 0:
             return -np.inf*np.ones(X.shape[0])
 

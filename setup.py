@@ -8,7 +8,8 @@ import numpy.distutils.misc_util
 include_dirs = numpy.distutils.misc_util.get_numpy_include_dirs()
 
 algorithms_ext = Extension('pyest.mixtures._algorithms',
-                ['pyest/mixtures/_algorithms.c'])
+                ['pyest/mixtures/_algorithms.c'],
+                libraries=['m'])
 
 setup(name='PyEST',
         version='0.1',
