@@ -61,12 +61,15 @@ class MixtureModel(object):
     def responsibilities(self):
         return self._kmeans_rs
 
-    def run_kmeans(self, maxiter=200, tol=1e-4, verbose=True):
+    def run_kmeans(self, ginv=None, maxiter=200, tol=1e-4, verbose=True):
         """
         Run the K-means algorithm
 
         Parameters
         ----------
+        ginv : numpy.ndarray (D, D), optional
+            The metric for the space: dist^2 = (X1-X2)^T.ginv.(X1-X2).
+
         maxiter : int, optional
             The maximum number of iterations (default: 200)
 
@@ -77,8 +80,10 @@ class MixtureModel(object):
             Print all the messages... (default: True)
 
         """
+        if ginv is None:
+            ginv = np.eye(self._data.shape[-1])
         self._means = self._means.T
-        _algorithms.kmeans(self._data, self._means, self._kmeans_rs, tol, maxiter, verbose)
+        _algorithms.kmeans(self._data, self._means, self._kmeans_rs, ginv, tol, maxiter, verbose)
         self._means = self._means.T
 
     def get_hist(self):
@@ -234,7 +239,9 @@ if __name__ == '__main__':
 
     mixture = MixtureModel(3, data)
     mixture.run_kmeans()
+    print mixture.means
     mixture.run_em()
+    print mixture.means
 
     pl.scatter(data[:,0], data[:,1], marker='o',
             c=[tuple(mixture._rs[i,:]) for i in range(data.shape[0])],

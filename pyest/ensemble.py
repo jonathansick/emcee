@@ -190,10 +190,10 @@ class EnsembleSampler(Sampler):
 
     @property
     def acor(self):
-        s = self.chain.shape
-        t = np.zeros((s[0], s[2]))
-        for i in range(s[0]):
-            t[i,:] = acor.acor(self.chain[i].T)[0]
+        s = self.dim
+        t = np.zeros(s)
+        for i in range(s):
+            t[i] = acor.acor(self.chain[:,:,i].T)[0]
         return t
 
 class DualEnsembleSampler(EnsembleSampler):

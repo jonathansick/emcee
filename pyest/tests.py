@@ -11,7 +11,7 @@ import numpy as np
 
 from mh import MHSampler
 from ensemble import EnsembleSampler, DualEnsembleSampler, SingleGaussianEnsemble
-from em import EMEnsemble
+from em import EMEnsemble, AffineInvariantEMEnsemble
 
 logprecision = -4
 
@@ -27,7 +27,7 @@ class Tests:
         self.nwalkers = 100
         self.ndim     = 5
 
-        self.N = 500
+        self.N = 3000
 
         self.mean = np.zeros(self.ndim)
         self.cov  = 0.5-np.random.rand(self.ndim*self.ndim).reshape((self.ndim,self.ndim))
@@ -81,6 +81,11 @@ class Tests:
                 ensemble_type=EMEnsemble, ensemble_args={'K': 1}, args=[self.icov])
         self.check_sampler()
 
+    def test_aiem(self):
+        self.sampler = DualEnsembleSampler(self.nwalkers, self.ndim, lnprob_gaussian,
+                ensemble_type=AffineInvariantEMEnsemble, ensemble_args={'K': 1}, args=[self.icov])
+        self.check_sampler()
+
 if __name__ == '__main__':
     import matplotlib.pyplot as pl
     tests = Tests()
@@ -88,12 +93,16 @@ if __name__ == '__main__':
 
     chains = []
 
-    for t in [tests.test_em, tests.test_dual2, tests.test_dual, tests.test_ensemble, tests.test_mh]:
+    for t in [tests.test_aiem, tests.test_em, tests.test_dual2, tests.test_dual, tests.test_ensemble, tests.test_mh]:
+        np.random.seed(10)
+        tests.setUp()
         print t
         try:
             t()
-            print "Mean autocorrelation time: {:.3f}".format(np.mean(tests.sampler.acor))
-        except:
+            print "Mean autocorrelation time(s):\n\t",
+            print tests.sampler.acor
+        except Exception as e:
+            print e
             print "failed!"
         print "Mean acceptance fraction: {:.3f}".format(np.mean(tests.sampler.acceptance_fraction))
         chains.append(tests.sampler.flatchain)

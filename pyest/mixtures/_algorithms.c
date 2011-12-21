@@ -18,6 +18,8 @@ static char kmeans_doc[] =
 "    The vector of responsibilities.  Each entry is an integer indicating\n"\
 "    the closest mean to a particular point in the dataset. This object\n"\
 "    will also have it's data overwritten.\n\n"\
+"ginv : numpy.ndarray (D, D)\n"\
+"    The metric for the space: dist^2 = (X1-X2)^T.ginv.(X1-X2).\n\n"\
 "tol : float\n"\
 "    The convergence criterion for the relative change in the likelihood\n\n"\
 "maxiter : int\n"\
@@ -48,33 +50,37 @@ PyMODINIT_FUNC init_algorithms(void)
 static PyObject *algorithms_kmeans(PyObject *self, PyObject *args)
 {
     /* parse the input tuple */
-    PyObject *data_obj = NULL, *means_obj = NULL, *rs_obj = NULL;
+    PyObject *data_obj = NULL, *means_obj = NULL, *rs_obj = NULL, *ginv_obj = NULL;
     double tol;
     int maxiter, verbose;
-    if (!PyArg_ParseTuple(args, "OOOdii", &data_obj, &means_obj, &rs_obj, &tol, &maxiter, &verbose))
+    if (!PyArg_ParseTuple(args, "OOOOdii", &data_obj, &means_obj, &rs_obj, &ginv_obj, &tol, &maxiter, &verbose))
         return NULL;
 
     /* get numpy arrays */
     PyObject *data_array  = PyArray_FROM_OTF(data_obj, NPY_DOUBLE, NPY_IN_ARRAY);
     PyObject *means_array = PyArray_FROM_OTF(means_obj, NPY_DOUBLE, NPY_INOUT_ARRAY);
     PyObject *rs_array    = PyArray_FROM_OTF(rs_obj, NPY_INTP, NPY_INOUT_ARRAY);
-    if (data_array == NULL || means_array == NULL || rs_array == NULL) {
+    PyObject *ginv_array  = PyArray_FROM_OTF(ginv_obj, NPY_DOUBLE, NPY_IN_ARRAY);
+    if (data_array == NULL || means_array == NULL || rs_array == NULL || ginv_array == NULL) {
         PyErr_SetString(PyExc_TypeError, "input objects can't be converted to arrays.");
         Py_XDECREF(data_array);
         Py_XDECREF(means_array);
         Py_XDECREF(rs_array);
+        Py_XDECREF(ginv_array);
         return NULL;
     }
 
     double *data  = (double*)PyArray_DATA(data_array);
     double *means = (double*)PyArray_DATA(means_array);
     long   *rs    = (long*)PyArray_DATA(rs_array);
+    double *ginv  = (double*)PyArray_DATA(ginv_array);
 
-    int p, d, k;
+    int p, d, k, i;
     int P = (int)PyArray_DIM(data_array, 0);
     int D = (int)PyArray_DIM(data_array, 1);
     int K = (int)PyArray_DIM(means_array, 0);
 
+    double *diff  = (double*)malloc(D*sizeof(double));
     double *dists = (double*)malloc(K*sizeof(double));
     long   *N_rs  = (long*)malloc(K*sizeof(long));
 
@@ -86,9 +92,13 @@ static PyObject *algorithms_kmeans(PyObject *self, PyObject *args)
             double min_dist = -1.0;
             for (k = 0; k < K; k++) {
                 dists[k] = 0.0;
+                for (d = 0; d < D; d++)
+                    diff[d] = means[k*D+d] - data[p*D+d];
                 for (d = 0; d < D; d++) {
-                    double diff = means[k*D+d] - data[p*D+d];
-                    dists[k] += diff*diff;
+                    double tmp = 0.0;
+                    for (i = 0; i < D; i++)
+                        tmp += ginv[d*D+i]*diff[i];
+                    dists[k] += diff[d]*tmp;
                 }
                 if (min_dist < 0 || dists[k] < min_dist) {
                     min_dist = dists[k];
@@ -132,6 +142,8 @@ static PyObject *algorithms_kmeans(PyObject *self, PyObject *args)
     Py_DECREF(data_array);
     Py_DECREF(means_array);
     Py_DECREF(rs_array);
+    Py_DECREF(ginv_array);
+    free(diff);
     free(dists);
     free(N_rs);
 
