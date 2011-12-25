@@ -171,5 +171,5 @@ if __name__ == '__main__':
         rosenbrock(int(args.N), int(args.nwalkers), int(args.resample))
     if doall or args.gaussian:
         print "Gaussian experiment"
-        ndgaussian(int(args.N), int(args.nwalkers), int(args.resample)))
+        ndgaussian(int(args.N), int(args.nwalkers), int(args.resample))
 
