@@ -8,6 +8,8 @@ The experiments outlined in document/pyest.pdf
 import numpy as np
 np.random.seed(5)
 
+import argparse
+
 import pyest
 
 def lnprob_gaussian(x, icov):
@@ -16,11 +18,8 @@ def lnprob_gaussian(x, icov):
 def lnprob_rosenbrock(p):
     return -(100*(p[1]-p[0]*p[0])**2+(1-p[0])**2)/20.0
 
-def ndgaussian():
-    nwalkers = 100
+def ndgaussian(N, nwalkers, resample):
     ndim     = 50
-
-    N = 1e3
     resample = 1
 
     cov  = 0.5-np.random.rand(ndim*ndim).reshape((ndim,ndim))
@@ -83,12 +82,8 @@ def ndgaussian():
     except Exception as e:
         print "acor failed: ", e
 
-def rosenbrock():
-    nwalkers = 500
+def rosenbrock(N, nwalkers, resample):
     ndim = 2
-
-    N = 5e4
-    resample = 100
 
     cov = np.eye(2)
     p0 = np.array([-8,-10])+np.array([16,70])*np.random.rand(nwalkers*2).reshape(nwalkers,2)
@@ -96,7 +91,7 @@ def rosenbrock():
     # Metropolis-Hastings
     print "Metropolis-Hastings"
     sampler = pyest.MHSampler(cov, ndim, lnprob_rosenbrock)
-    for i in sampler.sample(np.array(p0[0]), iterations=N, resample=resample):
+    for i in sampler.sample(np.array(p0[0]), iterations=N*nwalkers, resample=resample):
         pass
     print "Sampling finished"
     try:
@@ -149,6 +144,32 @@ def rosenbrock():
         print "acor failed: ", e
 
 if __name__ == '__main__':
-    rosenbrock()
-    # ndgaussian()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-N', help="Number steps to take",
+            default=1e5)
+    parser.add_argument('-w', '--nwalkers',
+            help='Number of walkers',
+            default=500)
+    parser.add_argument('--resample',
+            help='Resample chains by this number',
+            default=100)
+    parser.add_argument('-r', '--rosenbrock',
+            help='Run the Rosenbrock experiment',
+            action='store_true')
+    parser.add_argument('-g', '--gaussian',
+            help='Run the Gaussian experiment',
+            action='store_true')
+    args = parser.parse_args()
+
+    # by default do all of the experiments
+    doall = False
+    if not args.rosenbrock and not args.gaussian:
+        doall = True
+
+    if doall or args.rosenbrock:
+        print "Rosenbrock experiment"
+        rosenbrock(int(args.N), int(args.nwalkers), int(args.resample))
+    if doall or args.gaussian:
+        print "Gaussian experiment"
+        ndgaussian(int(args.N), int(args.nwalkers), int(args.resample)))
 
