@@ -51,7 +51,7 @@ PyMODINIT_FUNC init_acor(void)
 
 static PyObject *acor_acor(PyObject *self, PyObject *args)
 {
-    int i, j, N, ndim, info, maxlag;
+    int i = 0, j = 0, N, ndim, info, maxlag;
     double *data;
 
     /* Return value */
