@@ -38,8 +38,7 @@ class MixtureModel(object):
         inds = np.random.randint(data.shape[0],size=self._K)
         self._means = data[inds,:].T
         self._cov   = np.array([np.cov(data,rowvar=0)]*self._K)
-        self._as    = np.random.rand(K)
-        self._as /= np.sum(self._as)
+        self._as    = np.ones(K)/float(K)
 
     @property
     def K(self):
@@ -135,11 +134,15 @@ class MixtureModel(object):
         Run the pure Python implementation of the EM algorithm
         """
         L = None
+        self._rs = np.zeros((self._data.shape[0], self.K))
+        for i in range(self._data.shape[0]):
+            self._rs[i, self._kmeans_rs[i]] = 1
         for i in xrange(maxiter):
+            self._maximization(regularization)
             newL = self._expectation()
             if verbose and i == 0:
                 print "Initial NLL =", -newL
-            self._maximization(regularization)
+
             if L is None:
                 L = newL
             else:
@@ -197,7 +200,10 @@ class MixtureModel(object):
 
         logrs = []
         for k in range(self._K):
-            logrs += [np.log(self._as[k]) + self._log_multi_gauss(k, x)]
+            if self._as[k] > 0:
+                logrs += [np.log(self._as[k]) + self._log_multi_gauss(k, x)]
+            else:
+                logrs += [-np.inf*np.ones(self._data.shape[0])]
         logrs = np.concatenate(logrs).reshape((-1, self._K), order='F')
 
         # here lies some ghetto log-sum-exp...
@@ -211,10 +217,12 @@ class MixtureModel(object):
         return self._calc_prob(x)[0]
 
     def sample(self,N):
-        samples = np.vstack(
-                [np.random.multivariate_normal(self.means[:,k], self._cov[k],
-                    size=int(self._as[k]*(N+10))) for k in range(self._K)])
-        return samples[:N,:]
+        samples = []
+        for k in np.arange(self._K)[~self._as.mask]:
+            samples += [np.random.multivariate_normal(self.means[:,k], self._cov[k],
+                    size=int(self._as[k]*(N+10)))]
+        samples = np.vstack(samples)
+        return samples[np.random.randint(len(samples), size=N),:]
 
 if __name__ == '__main__':
     import matplotlib

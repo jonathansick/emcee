@@ -274,56 +274,10 @@ module to estimate the autocorrelation time of the chains. I ported \project{pya
 from the original \project{C++} procedure that is described in \citet{Goodman:2010} and
 is available online\footnote{\texttt{http://www.math.nyu.edu/faculty/goodman/software/acor/index.html}}
 
-\section{Our Implementation}
 
-\begin{enumerate}
+\subsection{Multivariate Gaussian distribution}
 
-    \item Why Python?
 
-    \item ``Checkerboard'' stepping instead of sequential in order to parallelize
-
-    \item Sample code
-
-    \item Access, license, etc.
-
-\end{enumerate}
-
-\section{Numerical Tests}
-
-\begin{enumerate}
-
-    \item Outline a basic M-H algorithm as the baseline comparison
-
-    \item Introduce autocorrelation time as an analytic for convergence testing.
-
-    \item Tests:
-        \begin{itemize}
-            \item \emph{N}-Gaussian (if proposal distribution isn't chosen properly
-                M-H is slow but it's fine if the proposal distribution is right).
-                \this~destroys this problem no matter what!
-
-            \item Rosenbrock density (highly non-Gaussian) --- \emph{epic} failure
-                for M-H but \this~does well.
-
-            \item Multimodal distribution?
-
-            \item Fitting a line?
-
-            \item Others?
-        \end{itemize}
-
-\end{enumerate}
-
-\section{Discussion}
-
-\begin{enumerate}
-
-    \item Discuss specific applications of the algorithm in astronomy (Hou \etal;
-        Hogg \& Lang; DFM \& Widrow; \etc)
-
-    \item Convince everybody that they should use it and cite us\ldots
-
-\end{enumerate}
 
 \begin{thebibliography}{70}
 \raggedright

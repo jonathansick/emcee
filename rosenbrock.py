@@ -14,12 +14,12 @@ def lnposterior(p):
 nwalkers = 10000
 p0 = np.array([-8,-10])+np.array([16,70])*np.random.rand(nwalkers*2).reshape(nwalkers,2)
 
-# sampler = DualEnsembleSampler(nwalkers, 2, lnposterior,
-#                 ensemble_type=MOGEnsemble, ensemble_args={'K': 10})
+sampler = DualEnsembleSampler(nwalkers, 2, lnposterior,
+                ensemble_type=MOGEnsemble, ensemble_args={'K': 10})
 
-sampler = DualEnsembleSampler(nwalkers, 2, lnposterior)
+# sampler = DualEnsembleSampler(nwalkers, 2, lnposterior)
 
-if False:
+if True:
     import matplotlib.pyplot as pl
     from matplotlib.patches import Ellipse
 
