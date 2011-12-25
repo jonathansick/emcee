@@ -5,12 +5,8 @@ Rosenbrock... whatever.
 
 """
 
-from __future__ import division
-
-__all__ = ['']
-
 import numpy as np
-from pyest import DualEnsembleSampler, EMEnsemble
+from pyest import DualEnsembleSampler, MOGEnsemble
 
 def lnposterior(p):
     return -(100*(p[1]-p[0]*p[0])**2+(1-p[0])**2)/20.0
@@ -19,7 +15,7 @@ nwalkers = 10000
 p0 = np.array([-8,-10])+np.array([16,70])*np.random.rand(nwalkers*2).reshape(nwalkers,2)
 
 # sampler = DualEnsembleSampler(nwalkers, 2, lnposterior,
-#                 ensemble_type=EMEnsemble, ensemble_args={'K': 10})
+#                 ensemble_type=MOGEnsemble, ensemble_args={'K': 10})
 
 sampler = DualEnsembleSampler(nwalkers, 2, lnposterior)
 
@@ -39,7 +35,7 @@ if False:
 
     for i, (pos,lnprob,state) in enumerate(sampler.sample(p0,None,None,
                                             iterations=100)):
-        if sampler.ensemble_type == EMEnsemble:
+        if sampler.ensemble_type == MOGEnsemble:
             if len(es) > 0:
                 [e.remove() for e in es]
             es = []
@@ -61,7 +57,7 @@ if False:
         line2.set_ydata(pos[len(pos)/2:,1])
         pl.title("iter = %d"%i)
         pl.draw()
-        if sampler.ensemble_type == EMEnsemble:
+        if sampler.ensemble_type == MOGEnsemble:
             pl.savefig("movie/em/%04d.png"%(i))
         else:
             pl.savefig("movie/gw/%04d.png"%(i))

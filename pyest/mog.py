@@ -6,35 +6,26 @@
 
 from __future__ import division
 
-__all__ = ['EMEnsemble']
+__all__ = ['MOGEnsemble', 'AIMOGEnsemble']
 
 import numpy as np
 
 import mixtures
 from ensemble import Ensemble
 
-class EMEnsemble(Ensemble):
+class MOGEnsemble(Ensemble):
     def __init__(self, *args, **kwargs):
         self.K = kwargs.pop('K', 10)
-        super(EMEnsemble, self).__init__(*args, **kwargs)
+        super(MOGEnsemble, self).__init__(*args, **kwargs)
 
     def propose_position(self, ensemble):
-        """
-        Propose a new position for another ensemble given the current positions
-
-        Parameters
-        ----------
-        ensemble : Ensemble
-            The ensemble that will be advanced.
-
-        """
         s = np.atleast_2d(ensemble.pos)
         Ns = len(s)
         c = np.atleast_2d(self.pos)
 
         self.mixture = mixtures.MixtureModel(self.K, c)
         self.mixture.run_kmeans(verbose=False)
-        self.mixture.run_em(verbose=False, regularization=1e-10, maxiter=2)
+        self.mixture.run_em(verbose=False, regularization=1e-10)
 
         q = self.mixture.sample(Ns)
         newlnprob = self.get_lnprob(q)
@@ -47,17 +38,8 @@ class EMEnsemble(Ensemble):
 
         return q, newlnprob, accept
 
-class AffineInvariantEMEnsemble(EMEnsemble):
+class AIMOGEnsemble(MOGEnsemble):
     def propose_position(self, ensemble):
-        """
-        Propose a new position for another ensemble given the current positions
-
-        Parameters
-        ----------
-        ensemble : Ensemble
-            The ensemble that will be advanced.
-
-        """
         s = np.atleast_2d(ensemble.pos)
         Ns = len(s)
         c = np.atleast_2d(self.pos)

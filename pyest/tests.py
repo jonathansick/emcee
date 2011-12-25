@@ -11,7 +11,7 @@ import numpy as np
 
 from mh import MHSampler
 from ensemble import EnsembleSampler, DualEnsembleSampler, SingleGaussianEnsemble
-from em import EMEnsemble, AffineInvariantEMEnsemble
+from mog import MOGEnsemble, AIMOGEnsemble
 
 logprecision = -4
 
@@ -76,14 +76,14 @@ class Tests:
                 ensemble_type=SingleGaussianEnsemble, args=[self.icov])
         self.check_sampler()
 
-    def test_em(self):
+    def test_mog(self):
         self.sampler = DualEnsembleSampler(self.nwalkers, self.ndim, lnprob_gaussian,
-                ensemble_type=EMEnsemble, ensemble_args={'K': 1}, args=[self.icov])
+                ensemble_type=MOGEnsemble, ensemble_args={'K': 1}, args=[self.icov])
         self.check_sampler()
 
-    def test_aiem(self):
+    def test_aimog(self):
         self.sampler = DualEnsembleSampler(self.nwalkers, self.ndim, lnprob_gaussian,
-                ensemble_type=AffineInvariantEMEnsemble, ensemble_args={'K': 1}, args=[self.icov])
+                ensemble_type=AIMOGEnsemble, ensemble_args={'K': 1}, args=[self.icov])
         self.check_sampler()
 
 if __name__ == '__main__':
@@ -93,7 +93,7 @@ if __name__ == '__main__':
 
     chains = []
 
-    for t in [tests.test_aiem, tests.test_em, tests.test_dual2, tests.test_dual, tests.test_ensemble, tests.test_mh]:
+    for t in [tests.test_aimog, tests.test_mog, tests.test_dual2, tests.test_dual, tests.test_ensemble, tests.test_mh]:
         np.random.seed(10)
         tests.setUp()
         print t

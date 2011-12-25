@@ -110,7 +110,7 @@ class MixtureModel(object):
 
     def run_em(self, maxiter=400, tol=1e-4, verbose=True, regularization=0.0):
         """
-        Run the EM algorithm using either the Python or C implementation
+        Run the EM algorithm
 
         Parameters
         ----------
