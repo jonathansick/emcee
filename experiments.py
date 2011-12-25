@@ -36,6 +36,7 @@ def ndgaussian(N, nwalkers, resample):
         pass
     try:
         print "acor time: ", sampler.acor
+        print "acceptance: ", sampler.acceptance_fraction
     except Exception as e:
         print "acor failed: ", e
 
@@ -46,6 +47,7 @@ def ndgaussian(N, nwalkers, resample):
         pass
     try:
         print "acor time: ", np.mean(sampler.acor)
+        print "acceptance: ", np.mean(sampler.acceptance_fraction)
     except Exception as e:
         print "acor failed: ", e
 
@@ -57,6 +59,7 @@ def ndgaussian(N, nwalkers, resample):
         pass
     try:
         print "acor time: ", np.mean(sampler.acor)
+        print "acceptance: ", np.mean(sampler.acceptance_fraction)
     except Exception as e:
         print "acor failed: ", e
 
@@ -68,6 +71,7 @@ def ndgaussian(N, nwalkers, resample):
         pass
     try:
         print "acor time: ", np.mean(sampler.acor)
+        print "acceptance: ", np.mean(sampler.acceptance_fraction)
     except Exception as e:
         print "acor failed: ", e
 
@@ -79,6 +83,7 @@ def ndgaussian(N, nwalkers, resample):
         pass
     try:
         print "acor time: ", np.mean(sampler.acor)
+        print "acceptance: ", np.mean(sampler.acceptance_fraction)
     except Exception as e:
         print "acor failed: ", e
 
@@ -93,9 +98,9 @@ def rosenbrock(N, nwalkers, resample):
     sampler = pyest.MHSampler(cov, ndim, lnprob_rosenbrock)
     for i in sampler.sample(np.array(p0[0]), iterations=N, resample=resample):
         pass
-    print "Sampling finished"
     try:
         print "acor time: ", sampler.acor
+        print "acceptance: ", sampler.acceptance_fraction
     except Exception as e:
         print "acor failed: ", e
 
@@ -104,9 +109,9 @@ def rosenbrock(N, nwalkers, resample):
     sampler = pyest.DualEnsembleSampler(nwalkers, ndim, lnprob_rosenbrock)
     for i,blah in enumerate(sampler.sample(np.array(p0), iterations=N, resample=resample)):
         pass
-    print "Sampling finished"
     try:
         print "acor time: ", sampler.acor
+        print "acceptance: ", np.mean(sampler.acceptance_fraction)
     except Exception as e:
         print "acor failed: ", e
 
@@ -118,6 +123,7 @@ def rosenbrock(N, nwalkers, resample):
         pass
     try:
         print "acor time: ", sampler.acor
+        print "acceptance: ", np.mean(sampler.acceptance_fraction)
     except Exception as e:
         print "acor failed: ", e
 
@@ -129,6 +135,7 @@ def rosenbrock(N, nwalkers, resample):
         pass
     try:
         print "acor time: ", sampler.acor
+        print "acceptance: ", np.mean(sampler.acceptance_fraction)
     except Exception as e:
         print "acor failed: ", e
 
@@ -140,6 +147,7 @@ def rosenbrock(N, nwalkers, resample):
         pass
     try:
         print "acor time: ", sampler.acor
+        print "acceptance: ", np.mean(sampler.acceptance_fraction)
     except Exception as e:
         print "acor failed: ", e
 
