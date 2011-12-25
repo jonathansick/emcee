@@ -91,7 +91,7 @@ def rosenbrock(N, nwalkers, resample):
     # Metropolis-Hastings
     print "Metropolis-Hastings"
     sampler = pyest.MHSampler(cov, ndim, lnprob_rosenbrock)
-    for i in sampler.sample(np.array(p0[0]), iterations=N*nwalkers, resample=resample):
+    for i in sampler.sample(np.array(p0[0]), iterations=N, resample=resample):
         pass
     print "Sampling finished"
     try:
