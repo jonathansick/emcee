@@ -12,7 +12,7 @@ consider citing this package. Thanks!
 
 ##INTRODUCTION
 
-MarkovPy is an extensible, pure-Python implementation of Markov chain
+PyEST is an extensible, pure-Python implementation of Markov chain
 Monte Carlo (MCMC) curve fitting. The calling syntax is designed to be
 like scipy.optimize so that it can (almost) be a drop in replacement.
 
@@ -24,7 +24,7 @@ PyMC or any other platforms but such ports would (of course) be welcomed.
 
 Navigate to this directory and run
 
-`% python setup.py install`
+    python setup.py install
 
 on the command line to install a module called pyest in the default
 Python path.
@@ -33,7 +33,7 @@ Python path.
 ##DEPENDENCIES
 
 This package requires [NumPy](http://numpy.scipy.org/) and it has been
-tested on Python 2.6.5.
+tested on Python 2.7.2.
 
 
 ##USAGE
@@ -43,16 +43,3 @@ tested on Python 2.6.5.
 See the [wiki](http://github.com/dfm/PyEST/wiki) for information tutorials, documentation and sample code.
 
 
-##LICENSE
-
-MarkovPy is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 2 as
-published by the Free Software Foundation.
-
-MarkovPy is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with MarkovPy.  If not, see [http://www.gnu.org/licenses/](http://www.gnu.org/licenses/).

@@ -7,7 +7,8 @@
 \newcommand{\etal}{\foreign{et\,al.}}
 \newcommand{\etc}{\foreign{etc.}}
 
-\newcommand{\fig}[1]{Figure \ref{fig:#1}}
+\newcommand{\Fig}[1]{Figure \ref{fig:#1}}
+\newcommand{\fig}[1]{figure \ref{fig:#1}}
 \newcommand{\figlabel}[1]{\label{fig:#1}}
 \newcommand{\Eq}[1]{Equation (\ref{eq:#1})}
 \newcommand{\eq}[1]{equation (\ref{eq:#1})}
@@ -45,7 +46,8 @@
     converge with fewer steps in the chain.
 
     I present a generalization to the \citet{Goodman:2010} affine invariant sampler
-    that allows for arbitrarily sophisticated unsupervised machine learning techniques
+    that (a) provides automatic parallelization of the algorithm and (b) allows
+    for arbitrarily sophisticated unsupervised machine learning techniques
     to be used to generate the proposal distribution.  I show that even a very simple
     application of our algorithm is extremely efficient.  I judge the efficiency
     of the algorithm based on the autocorrelation time of many chains.
@@ -57,45 +59,92 @@
 \end{abstract}
 
 \keywords{
+    methods: data analysis ---
+    methods: numerical ---
+    methods: statistical
 }
 
 \section{Introduction}
 
-\begin{enumerate}
+In recent years, the astronomy and cosmology literature has been full of articles
+promoting Bayesian methods of data analysis. Bayesian inference is particularly
+relevant in astrophysics because most problems are being solved in the regime of
+very low signal-to-noise, large systematic uncertainties and missing components of
+the data. These problems might seem like serious road blocks. In most physics problems
+of interest, however, there is generally a motivated, physical generative model
+that makes predictions about the data or several such models that we wish to compare.
+If we can leverage the physics that we understand and the rich prior information
+from the literature then there is a chance --- it has been repeatedly shown ---
+of solving these problems.
 
-    \item Bayesian inference  --- and with it, MCMC sampling --- is becoming an
-        integral part of the day-to-day routine for many astronomers (tons of
-        citations). and "why you might want to join the ranks of these kool kids;
-        it's not hard, and you don't have to drink the kool-aid to be Bayesian
-        when necessary." Remember, a maximum-likelihood problem can be rephrased
-        as an MCMC problem easily by assuming flat priors.
+Most problems in Bayesian inference involve solving a marginalization integral of
+the form
+\begin{equation}
+    \eqlabel{marginalization}
+    p (\mathbf{X} | \boldsymbol{\Theta}) = \int
+        p (\mathbf{X} | \boldsymbol{\Theta},\boldsymbol{\alpha}) \,
+        p (\boldsymbol{\alpha}) \, \dd \boldsymbol{\alpha}
+\end{equation}
+where $p (\mathbf{X} | \boldsymbol{\Theta})$ is the marginalized likelihood of the
+data $\mathbf{X}$ given the model parameters $\boldsymbol{\Theta}$. The integral in
+\eq{marginalization} is over a set of \emph{nuisance parameters} $\boldsymbol{\alpha}$
+that are (generally) of no physical interest in the problem. In some very specific
+cases, this integral is analytically tractable but in general, the likelihood function
+$p (\mathbf{X} | \boldsymbol{\Theta},\boldsymbol{\alpha})$ is not a simple analytically
+integrable function. In fact, in many problems, the likelihood function is actually
+the result of an extremely expensive numerical simulation. In this regime, the
+marginalization is generally performed using Markov chain Monte Carlo (MCMC).
+If the likelihood function is expensive to calculate, it is advantageous to use a
+sampling algorithm that reduces the necessary number of likelihood evaluations.
+This also precludes the use of second order methods (such as hybrid/Hamiltonian
+Monte Carlo) that require the calculation of (numerical) gradients of the likelihood
+function.
 
-    \item Traditional sampling methods (M-H) become extremely inefficient as the
-        underlying distribution becomes non-Gaussian or even just highly covariant.
-        There have been various ad-hoc fine-tuning methods proposed to deal with
-        this problem (citations; annealing, proposal covariance estimation, etc.)
-        and various more sophisticated methods (?; e.g.~Nested sampling, etc.;
-        citations) but these modifications are often difficult to implement and
-        require significant fine-tuning of free parameters to obtain an efficient
-        sampling.
+Most uses of MCMC in the astrophysics literature are based on slight modifications
+to the Metropolis-Hastings (M-H) method \citep[e.g.][]{MacKay:2003}. Each step in
+a M-H chain is proposed using a multivariate Gaussian centered on the current
+position of the chain. Since each term in the covariance matrix of this proposal
+distribution is an unspecified parameter, this method has $D\,[D+1]/2$ tuning parameters
+(where $D$ is the dimension of the parameter space).  To make matters worse, the
+performance of this sampler is very sensitive to the optimality of these tuning
+parameters and there is no fool-proof method for choosing the values correctly.
+As a result, many heuristic methods have been developed to attempt to determine
+the optimal parameters in a data-driven way \citep[e.g.][]{Gregory:2005,Dunkley:2005,Widrow:2008}.
+Unfortunately, these methods all require ``burn-in'' phases where shorter Markov chains
+are sampled and the results are used to tune the hyperparameters. This extra cost
+is unacceptable when the likelihood calls are computationally heavy.
 
-    \item Cite Goodman \& Weare and give a quick summary of why it's good.
+The problem with traditional sampling methods can be visualized by studying the
+highly anisotropic density
+\begin{equation}
+    \eqlabel{anisotropic}
+    p(\mathbf{x}) \propto \exp \left (-\frac{(x_1-x_2)^2}{2\,\epsilon} - \frac{(x_1+x_2)^2}{2} \right )
+\end{equation}
+which would be considered ``difficult'' by standard MCMC algorithms. \Eq{anisotropic}
+can be transformed into the much easier problem of sampling an isotropic Gaussian
+by an \emph{affine transformation} of the form
+\begin{equation}
+    y_1 = \frac{x_1-x_2}{\sqrt{\epsilon}} \, , \,\,\, y_2 = x_1 + x_2.
+\end{equation}
+Therefore, an algorithm that is \emph{affine invariant} will be insensitive to
+covariances between parameters. An affine invariant algorithm is unaffected by
+any transformation of the density of the form
+\begin{equation}
+    \mathbf{Y} = \mathbf{A}\, \mathbf{X} + \mathbf{b}.
+\end{equation}
 
-    \item Cite Hou \etal, Lang \& Hogg and any other applications.
+Extending earlier work by \citet{Christen:2007},
+\citet{Goodman:2010} proposed an affine invariant sampling algorithm with only
+one hyperparameter that can be tuned for performance. This algorithm has since
+proved effective in many projects
+\citep[e.g.][Foreman-Mackey \& Widrow~2012, in prep.]{Hou:2011, Lang:2011}.
 
-\end{enumerate}
+In this paper, I parallelize the algorithm so that any problem can generically
+take advantage of this optimization. I also generalize the algorithm to allow
+\emph{any} probabilistic unsupervised learning techniques to be used to inform
+the proposal distribution.
 
 \section{The Algorithm}
-
-\citet{Hou:2011}
-
-At the core of \this, lies the affine invariant ensemble sampler from
-\citep{Goodman:2010}.  In particular, I have implemented the ``stretch move''
-algorithm.  To achieve convergence with standard MCMC samplers, several
-hyperparameters must be fine tuned to account for non-trivial covariances between
-the model parameters of a particular problem \citep[e.g.][]{Dunkley:2005}.
-The performance of an affine invariant sampler, however, is independent of the
-off-diagonal terms in the covariance matrix of any specific distribution.
 
 \subsection{The stretch move}
 
@@ -272,15 +321,43 @@ and the integrated autocorrelation time is given by
 For all tests discussed in this paper, I have used the \project{pyacor}\footnote{\texttt{https://github.com/dfm/acor}}
 module to estimate the autocorrelation time of the chains. I ported \project{pyacor} to \project{Python}
 from the original \project{C++} procedure that is described in \citet{Goodman:2010} and
-is available online\footnote{\texttt{http://www.math.nyu.edu/faculty/goodman/software/acor/index.html}}
+is available online\footnote{\texttt{http://www.math.nyu.edu/faculty/goodman/software/acor/index.html}}.
 
 
 \subsection{Multivariate Gaussian distribution}
 
+The simplest test of an MCMC sampler is its sampling performance on a highly covariant
+multivariate Gaussian density. For the tests in the paper, I randomly generated
+a 50 dimensional positive definite covariance tensor and initial conditions for each
+walker.  Then, each sampler was tested with the same initial conditions for its
+performance on the density
+\begin{equation}
+    \pi (\mathbf{x}) \propto \exp\left ( -\frac{1}{2} \mathbf{x}^T \, \Sigma^{-1} \, \mathbf{x} \right )
+\end{equation}
+for the same covariance tensor $\Sigma$ in each trial.
 
+\subsection{The Rosenbrock density}
+
+The Rosenbrock density
+\begin{equation}
+    p(\mathbf{x}) \propto \exp \left ( -\frac{100 \, (x_2 - x_1^2)^2+ (1-x_1)^2}{20} \right )
+\end{equation}
+is plotted in \fig{rosenbrock}. Despite the fact that it is only two-dimensional,
+this density poses severe problems for all MCMC samplers.
+
+
+\begin{figure}
+\epsscale{1.}
+\plotone{rosenbrock.pdf}
+\caption{The Rosenbrock density.\figlabel{rosenbrock}}
+\end{figure}
 
 \begin{thebibliography}{70}
 \raggedright
+
+\bibitem[Christen~(2007)]{Christen:2007}
+{Christen}, J., \emph{A general purpose scale-independent MCMC algorithm}, technical report I-07-16,
+CIMAT, Guanajuato, 2007.
 
 \bibitem[Dunkley \etal(2005)]{Dunkley:2005}
 {Dunkley}, J., {Bucher}, M., {Ferreira}, P.~G., {Moodley}, K., \& {Skordis}, C.,
@@ -291,10 +368,29 @@ is available online\footnote{\texttt{http://www.math.nyu.edu/faculty/goodman/sof
 Goodman,~J., \& Weare,~J.,
 2010, Comm.\ App.\ Math.\ Comp.\ Sci., 5, 65
 
-\bibitem[F. Hou \etal(2011))]{Hou:2011}
+\bibitem[Gregory~(2005))]{Gregory:2005}
+{Gregory}, P.~C., \emph{Bayesian Logical Data Analysis for the Physical Sciences},
+Cambridge University Press, 2005
+% http://adsabs.harvard.edu/abs/2005blda.book.....G
+
+\bibitem[Hou \etal(2011))]{Hou:2011}
 {Hou}, F., {Goodman}, J., {Hogg}, D.~W., {Weare}, J., \& {Schwab}, C.,
 2011, arXiv:1104.2612
 % http://adsabs.harvard.edu/abs/2011arXiv1104.2612H
+
+\bibitem[Lang \& Hogg (2011))]{Lang:2011}
+{Lang}, D. and {Hogg}, D.~W.,
+2011, arXiv:1103.6038
+% http://adsabs.harvard.edu/abs/2011arXiv1103.6038L
+
+\bibitem[MacKay~(2003))]{MacKay:2003}
+{MacKay}, D., \emph{Information Theory, Inference, and Learning Algorithms},
+Cambridge University Press, 2003
+
+\bibitem[Widrow \etal(2008))]{Widrow:2008}
+{Widrow}, L.~M. and {Pym}, B. and {Dubinski}, J.,
+2008, \apj, 679, 1239
+% http://adsabs.harvard.edu/abs/2008ApJ...679.1239W
 
 \end{thebibliography}
 
