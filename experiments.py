@@ -6,7 +6,6 @@ The experiments outlined in document/pyest.pdf
 """
 
 import numpy as np
-np.random.seed(5)
 
 import argparse
 

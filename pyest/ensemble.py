@@ -293,30 +293,3 @@ class DualEnsembleSampler(EnsembleSampler):
             # heavy duty iterator action going on right here
             yield p, lnprob, self.random_state
 
-if __name__ == '__main__':
-    import pylab as pl
-    ndim = 10
-    N = 100
-
-    mean = np.zeros(ndim)
-    cov  = 0.5-np.random.rand(ndim*ndim).reshape((ndim,ndim))
-    cov  = np.triu(cov)
-    cov += cov.T - np.diag(cov.diagonal())
-    cov  = np.dot(cov,cov)
-    icov = np.linalg.inv(cov)
-    p0   = np.random.randn(ndim*N).reshape(N, ndim)
-
-    def lnprob_gaussian(x, icov):
-        return -np.dot(x,np.dot(icov,x))/2.0
-
-    sampler = DualEnsembleSampler(100, ndim, lnprob_gaussian, args=[icov])
-    for i in sampler.sample(p0, iterations=1e3, resample=10):
-        pass
-
-    print sampler.acceptance_fraction
-    pl.plot(sampler.lnprobability[0,:])
-    pl.figure()
-    pl.plot(sampler.chain[0,:,:])
-
-    pl.show()
-

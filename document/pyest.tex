@@ -10,6 +10,9 @@
 \newcommand{\Fig}[1]{Figure \ref{fig:#1}}
 \newcommand{\fig}[1]{figure \ref{fig:#1}}
 \newcommand{\figlabel}[1]{\label{fig:#1}}
+\newcommand{\Tab}[1]{Table \ref{tab:#1}}
+\newcommand{\tab}[1]{table \ref{tab:#1}}
+\newcommand{\tablabel}[1]{\label{tab:#1}}
 \newcommand{\Eq}[1]{Equation (\ref{eq:#1})}
 \newcommand{\eq}[1]{equation (\ref{eq:#1})}
 \newcommand{\eqlabel}[1]{\label{eq:#1}}
@@ -48,9 +51,10 @@
     I present a generalization to the \citet{Goodman:2010} affine invariant sampler
     that (a) provides automatic parallelization of the algorithm and (b) allows
     for arbitrarily sophisticated unsupervised machine learning techniques
-    to be used to generate the proposal distribution.  I show that even a very simple
-    application of our algorithm is extremely efficient.  I judge the efficiency
-    of the algorithm based on the autocorrelation time of many chains.
+    to be used to generate the proposal distribution.  I show that even a simple
+    application of the algorithm is efficient.  I judge the efficiency
+    of the algorithm based on the autocorrelation time of the samplers on two
+    test densities.
 
     This result is particularly useful in situations where the likelihood call is
     very computationally expensive so that the extra cost associated with generating
@@ -336,6 +340,15 @@ performance on the density
 \end{equation}
 for the same covariance tensor $\Sigma$ in each trial.
 
+I ran a chain with $10^3$ steps and 100 walkers to measure the performance of the
+samplers on this density. For comparison, I also tested a basic M-H sampler. For
+the mixture-of-Gaussian (MOG) models, I used $K = 1$ Gaussians. The
+results are shown in \tab{gaussian}. As expected, the stretch move performs
+significantly better than M-H and the single Gaussian proposal is slightly better
+than that. Since EM with a single Gaussian finds the maximum likelihood solution
+for the mean and variance, it is unsurprising that the performance is identical
+to the analytic single Gaussian case.
+
 \subsection{The Rosenbrock density}
 
 The Rosenbrock density
@@ -345,12 +358,39 @@ The Rosenbrock density
 is plotted in \fig{rosenbrock}. Despite the fact that it is only two-dimensional,
 this density poses severe problems for all MCMC samplers.
 
+I ran a chain with $10^3$ steps and 100 walkers to test the performance
+of the samplers on this difficult density. The performance statistics in this
+case are similar to the results for the Gaussian with the extensions presented in
+this paper performing somewhat better than the stretch move algorithm.
 
-\begin{figure}
-\epsscale{1.}
-\plotone{rosenbrock.pdf}
-\caption{The Rosenbrock density.\figlabel{rosenbrock}}
-\end{figure}
+\section{Implementation Details}
+
+The core module is implemented in the \project{Python} files in the \texttt{pyest}
+directory. The abstract \texttt{Sampler} object definition is found in
+\texttt{pyest/sampler.py}. A simple vanilla M-H sampler is found in \texttt{pyest/mh.py}.
+The original stretch move sampler is implemented in the \texttt{EnsembleSampler}
+object in \texttt{pyest/ensemble.py} as well as the skeleton for the parallelized
+and generalized samplers in the \texttt{DualEnsembleSampler} object. The
+mixture-of-Gaussians ensembles are implemented in \texttt{pyest/mog.py} module.
+The mixture models depend on the mixture module in the \texttt{pyest/mixtures}
+directory. This is modified version of the code that I wrote for the third
+homework assignment in this class. All of the samplers depend on a custom version
+of the \project{pyacor} module that can be found in the \texttt{pyest/acor} directory.
+
+Before usage, the module must be built and installed by running \texttt{make}
+in the root directory of the module. Then, a suite of unit tests for all the
+samplers can be run as
+
+\texttt{python pyest/tests.py}
+
+\noindent or using \texttt{nosetests}.
+
+The experiments described in the previous section can be repeated by running
+
+\texttt{python experiments.py}
+
+\noindent The command line arguments to modify the experiments are described in
+the help that can be retrieved with the \texttt{--help} flag.
 
 \begin{thebibliography}{70}
 \raggedright
@@ -394,6 +434,49 @@ Cambridge University Press, 2003
 
 \end{thebibliography}
 
+\clearpage
+
+
+\begin{deluxetable}{cc}
+    \tablecaption{Benchmark results for the Gaussian density \tablabel{gaussian}}
+    \tablewidth{0pt}
+    \tablehead{
+    \colhead{Sampler} & \colhead{Average autocorrelation time}
+    }
+    \startdata
+
+        Metropolis-Hastings & 140.67 \\
+        Stretch move & 0.95 \\
+        Single Gaussian proposal & 0.68 \\
+        Mixture-of-Gaussians proposal & 0.75 \\
+        Affine invariant MOG proposal & 0.75 \\
+
+    \enddata
+\end{deluxetable}
+
+
+\begin{figure}
+\epsscale{1.}
+\plotone{rosenbrock.pdf}
+\caption{The Rosenbrock density.\figlabel{rosenbrock}}
+\end{figure}
+
+\begin{deluxetable}{ccc}
+    \tablecaption{Benchmark results for the Rosenbrock density \tablabel{rosenbrock}}
+    \tablewidth{0pt}
+    \tablehead{
+    \colhead{Sampler} & \colhead{$\mathrm{Acor}(x_1)$} & \colhead{$\mathrm{Acor}(x_2)$}
+    }
+    \startdata
+
+        Metropolis-Hastings & 503.69 & 115.08 \\
+        Stretch move & 1.45 & 0.69 \\
+        Single Gaussian proposal & 0.76 & 0.06 \\
+        Mixture-of-Gaussians proposal & 0.66 & 0.49 \\
+        Affine invariant MOG proposal & 0.91 & 0.98 \\
+
+    \enddata
+\end{deluxetable}
 
 \end{document}
 
