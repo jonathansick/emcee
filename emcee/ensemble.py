@@ -49,6 +49,10 @@ class EnsembleSampler(Sampler):
       parallelized algorithm. If `pool is not None`, the value of `threads`
       is ignored and the provided `Pool` is used for all parallelization.
       (default: `None`)
+    * `wrap_lnprobfn` (bool): If `True`, then `lnpostfn` will be wrapped in
+      a callable class with `args` for pickleability. Set to `False` if you
+      already wrapped the probability function in a callable class with input
+      arguments (`args` is None). (default: `True`)
 
     #### Exceptions
 
@@ -68,7 +72,7 @@ class EnsembleSampler(Sampler):
         self.a       = kwargs.pop("a", 2.0)
         self.threads = int(kwargs.pop("threads", 1))
         self.pool    = kwargs.pop("pool", None)
-
+        self.wrap_lnprobfn = kwargs.pop("wrap_lnprobfn", True)
         dangerous = kwargs.pop('live_dangerously', False)
 
         super(EnsembleSampler, self).__init__(*args, **kwargs)
@@ -252,7 +256,10 @@ class Ensemble(object):
         self.sampler = sampler
         # Do a little bit of _magic_ to make the likelihood call with
         # `args` pickleable.
-        self.lnprobfn = _function_wrapper(sampler.lnprobfn, sampler.args)
+        if self.sampler.wrap_lnprobfn:
+            self.lnprobfn = _function_wrapper(sampler.lnprobfn, sampler.args)
+        else:
+            self.lnprobfn = sampler.lnprobfn
 
     def get_lnprob(self, pos=None):
         """
