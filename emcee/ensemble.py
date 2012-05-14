@@ -53,6 +53,11 @@ class EnsembleSampler(Sampler):
       a callable class with `args` for pickleability. Set to `False` if you
       already wrapped the probability function in a callable class with input
       arguments (`args` is None). (default: `True`)
+    * `lnprob_mapper` (callable): Use a self-mapping user probabilty function.
+      This accepts a sequence of parameter sets, and returns those parameters
+      in order. The `lnprob_mapper` implements its own multi-threading. If set
+      `lnpostfn`, `args`, `pool`, and `threads` will be ignored.
+      (default: `None`)
 
     #### Exceptions
 
@@ -73,13 +78,15 @@ class EnsembleSampler(Sampler):
         self.threads = int(kwargs.pop("threads", 1))
         self.pool    = kwargs.pop("pool", None)
         self.wrap_lnprobfn = kwargs.pop("wrap_lnprobfn", True)
+        self.lnprob_mapper = kwargs.pop("lnprob_mapper", None)
         dangerous = kwargs.pop('live_dangerously', False)
 
         super(EnsembleSampler, self).__init__(*args, **kwargs)
         if not dangerous:
             assert self.k%2 == 0 and self.k >= 2*self.dim
 
-        if self.threads > 1 and self.pool is None:
+        if self.threads > 1 and self.pool is None \
+                and self.ln_prob_mapper is None:
             self.pool = multiprocessing.Pool(self.threads)
 
     @staticmethod
@@ -254,9 +261,13 @@ class Ensemble(object):
 
     def __init__(self, sampler):
         self.sampler = sampler
-        # Do a little bit of _magic_ to make the likelihood call with
-        # `args` pickleable.
-        if self.sampler.wrap_lnprobfn:
+        self.M = None
+        if self.sampler.lnprob_mapper is not None:
+            # Use the user's map function.
+            self.M = self.sampler.lnprob_mapper
+        elif self.sampler.wrap_lnprobfn:
+            # Do a little bit of _magic_ to make the likelihood call with
+            # `args` pickleable.
             self.lnprobfn = _function_wrapper(sampler.lnprobfn, sampler.args)
         else:
             self.lnprobfn = sampler.lnprobfn
@@ -282,17 +293,26 @@ class Ensemble(object):
         else:
             p = pos
 
-        # If the `pool` property of the sampler has been set (i.e. we want
-        # to use `multiprocessing`), use the `pool`'s map method. Otherwise,
-        # just use the built-in `map` function.
-        if self.sampler.pool is not None:
-            M = self.sampler.pool.map
+        if self.M is not None:
+            # Use the user's mappable probability function. This accepts a
+            # list of parameter sets, like map(). However, the probabilty
+            # function is baked in, and doesn't need to be passed. This
+            # saves significant pickle overhead in the multiprocessing case
+            # where the probability function contains a large dataset or
+            # needs to be set up prior to computation.
+            lnprob = np.array(self.M([p[i] for i in range(len(p))]))
         else:
-            M = map
+            # If the `pool` property of the sampler has been set (i.e. we want
+            # to use `multiprocessing`), use the `pool`'s map method.
+            # Otherwise, just use the built-in `map` function.
+            if self.sampler.pool is not None:
+                M = self.sampler.pool.map
+            else:
+                M = map
 
-        # Calculate the probabilities.
-        lnprob = np.array(M(self.lnprobfn, [p[i]
-                    for i in range(len(p))]))
+            # Calculate the probabilities.
+            lnprob = np.array(M(self.lnprobfn, [p[i]
+                        for i in range(len(p))]))
 
         return lnprob
 
